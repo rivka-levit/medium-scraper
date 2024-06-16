@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - ./app:/app
+    ports:
+      - "80:80"
+    depends_on:
+      chrome:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+  chrome:
+    image: selenium/standalone-chrome
+    hostname: chrome
+    ports:
+      - "4444:4444"
+    privileged: true
+    shm_size: 2g
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://chrome:4444" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
