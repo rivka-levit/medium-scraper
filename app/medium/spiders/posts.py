@@ -5,6 +5,8 @@ from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
 
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 from medium.items import MediumItem
 
@@ -23,6 +25,15 @@ class PostsSpider(scrapy.Spider):
         )
         driver.get(self.start_urls[0])
         driver.implicitly_wait(5)
+
+        try:
+            driver.find_element(
+                By.XPATH,
+                '/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/div/div/div[3]/div[4]/div/p/span/a'
+            ).click()
+            time.sleep(3)
+        except (Exception, NoSuchElementException) as e:
+            print(e.msg)
 
         i = 1
         num_scrolls = 10
