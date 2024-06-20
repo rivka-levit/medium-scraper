@@ -6,7 +6,6 @@ from scrapy.selector import Selector
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 
 from medium.items import MediumItem
 
@@ -14,7 +13,7 @@ from medium.items import MediumItem
 class PostsSpider(scrapy.Spider):
     name = "posts"
     allowed_domains = ["medium.com"]
-    start_urls = ["https://medium.com"]
+    start_urls = ["https://medium.com/m/signin", "https://medium.com"]
 
     def parse(self, r, **kwargs):
         options = webdriver.ChromeOptions()
@@ -26,14 +25,20 @@ class PostsSpider(scrapy.Spider):
         driver.get(self.start_urls[0])
         driver.implicitly_wait(5)
 
-        try:
-            driver.find_element(
-                By.XPATH,
-                '/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/div/div/div[3]/div[4]/div/p/span/a'
-            ).click()
-            time.sleep(3)
-        except (Exception, NoSuchElementException) as e:
-            print(e.msg)
+        driver.find_element(
+            By.XPATH,
+            '//button[div="Sign in with email"]'
+        ).click()
+        time.sleep(2)
+
+        input_box = driver.find_element(By.XPATH, './/input[@type="email"]')
+        btn = driver.find_element(By.XPATH, './/button[text()="Continue"]')
+
+        input_box.send_keys('juliacreadora@gmail.com')
+        time.sleep(1)
+        btn.click()
+
+        # driver.get_screenshot_as_file('screenshot.png')
 
         i = 1
         num_scrolls = 10
