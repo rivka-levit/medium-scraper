@@ -9,6 +9,11 @@ from selenium.webdriver.common.by import By
 
 from medium.items import MediumItem
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 class PostsSpider(scrapy.Spider):
     name = "posts"
@@ -34,7 +39,7 @@ class PostsSpider(scrapy.Spider):
         input_box = driver.find_element(By.XPATH, './/input[@type="email"]')
         btn = driver.find_element(By.XPATH, './/button[text()="Continue"]')
 
-        input_box.send_keys('juliacreadora@gmail.com')
+        input_box.send_keys(os.environ.get('EMAIL'))
         time.sleep(1)
         btn.click()
 
