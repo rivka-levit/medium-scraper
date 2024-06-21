@@ -6,6 +6,8 @@ services:
       - ./app:/app
     ports:
       - "80:80"
+    env_file:
+      - .env
     depends_on:
       chrome:
         condition: service_healthy

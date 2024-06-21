@@ -1,5 +1,9 @@
 import scrapy
 import time
+import os
+import re
+import email
+import imaplib
 
 from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
@@ -10,9 +14,40 @@ from selenium.webdriver.common.by import By
 from medium.items import MediumItem
 
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
+
+
+def get_sign_in_link():
+    mail = imaplib.IMAP4_SSL(os.environ.get('SERVER'))
+    mail.login(os.environ.get('EMAIL'), os.environ.get('PASSWORD'))
+    mail.select('inbox')
+    status, data = mail.search(
+        None,
+        '(FROM "noreply@medium.com" SUBJECT "Sign in to Medium")'
+    )
+    ids = data[0].split()
+    latest_email_id = ids[-1]
+
+    # fetch the email body (RFC822) for the given ID
+    result, data = mail.fetch(latest_email_id, "(RFC822)")
+    raw_email = data[0][1]
+    msg = email.message_from_bytes(raw_email)
+
+    if msg.is_multipart():
+        mail_content = ''
+
+        for part in msg.get_payload():
+            if part.get_content_type() == 'text/plain':
+                mail_content += part.get_payload()
+    else:
+        mail_content = msg.get_payload()
+
+    pattern = r'https://medium\.com/m/callback/email\?token=.+(?=If the button above)'
+    link = re.search(pattern, mail_content, flags=re.DOTALL).group(0)
+    cleaned_link = ''.join(link.strip().split('\r\n'))
+
+    return cleaned_link
 
 
 class PostsSpider(scrapy.Spider):
@@ -42,6 +77,9 @@ class PostsSpider(scrapy.Spider):
         input_box.send_keys(os.environ.get('EMAIL'))
         time.sleep(1)
         btn.click()
+        time.sleep(5)
+
+        new_url = get_sign_in_link()
 
         # driver.get_screenshot_as_file('screenshot.png')
 
