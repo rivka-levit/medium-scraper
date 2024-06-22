@@ -26,26 +26,26 @@ def get_sign_in_link():
         None,
         '(FROM "noreply@medium.com" SUBJECT "Sign in to Medium")'
     )
-    ids = data[0].split()
+    ids = data[0].split()  # Item in data list is a space separated string
     latest_email_id = ids[-1]
 
-    # fetch the email body (RFC822) for the given ID
+    # Fetch the email body (RFC822) for the given ID
     result, data = mail.fetch(latest_email_id, "(RFC822)")
+
+    # Raw text of the whole email including headers and alternate payloads
     raw_email = data[0][1]
+
     msg = email.message_from_bytes(raw_email)
 
-    if msg.is_multipart():
-        mail_content = ''
+    pattern = (r'(?<=a class=3D\"email-button email-marginVert=\nical4\" '
+               r'href=3D\")https://medium\.com/.+?auth\.login.+?(?=\" '
+               r'style=3D\"color)')
 
-        for part in msg.get_payload():
-            if part.get_content_type() == 'text/plain':
-                mail_content += part.get_payload()
-    else:
-        mail_content = msg.get_payload()
-
-    pattern = r'https://medium\.com/m/callback/email\?token=.+(?=If the button above)'
-    link = re.search(pattern, mail_content, flags=re.DOTALL).group(0)
-    cleaned_link = ''.join(link.strip().split('\r\n'))
+    link = re.search(pattern, string=msg.as_string(), flags=re.DOTALL).group(0)
+    cleaned_link = ''.join(
+        link.strip().replace('&amp=', '').replace('&amp', '').
+        replace('3D', '').replace(';', '&').split('\n')
+    )
 
     return cleaned_link
 
@@ -80,6 +80,8 @@ class PostsSpider(scrapy.Spider):
         time.sleep(5)
 
         new_url = get_sign_in_link()
+        driver.get(new_url)
+        time.sleep(3)
 
         # driver.get_screenshot_as_file('screenshot.png')
 
